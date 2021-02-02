@@ -31,7 +31,7 @@ rule dh_send_m:
         M = ('g'^~X)^~ltkA
     in
     [St_A_1(A, ~id, ~ltkA), Fr(~X), !Pk(B, pkB)] 
-    --[ Send_to_B(A, aenc(M, pkB)), Secret_M(B, M), Honest(A), Honest(B), Role('A') ]->
+    --[ Send_to_B(A, aenc(M, pkB)), Secret(B, M), Honest(A), Honest(B), Role('A') ]->
     [ St_A_2(A, ~id, ~ltkA, B, pkB, M, ~X ), Out(aenc(M, pkB)) ]
 
 rule dh_receive_m:
@@ -44,12 +44,12 @@ rule dh_send_n:
         N = ('g'^~Y)^~ltkB
     in
     [St_B_2(B, ~id, ~ltkB, M), Fr(~Y), !Pk(A, pkA)] 
-    --[ Send_to_A(B, aenc(N, pkA)), Secret_N(A, N), Honest(A), Honest(B), Role('B') ]->
+    --[ Send_to_A(B, aenc(N, pkA)), Honest(A), Honest(B), Role('B') ]->
     [ St_B_3(B, ~id, ~ltkB, A, pkA, M, N, ~Y), Out(aenc(N, pkA)) ]
 
 rule dh_receive_n: 
     [ St_A_2(A, ~id, ~ltkA, B, pkB, M, ~X), In(aenc(N, pkA)) ]
-    --[Receive_N( A, aenc(N, pkA)), Role('A') ]->
+    --[Receive_N( A, aenc(N, pkA)), Secret(A, N), Honest(A), Honest(B), Role('A') ]->
     [St_A_3(A, ~id, ~ltkA, B, pkB, M, N, ~X) ]
 
 rule A_create_session:
@@ -78,7 +78,7 @@ lemma executable:
 
 lemma secrecy:
   "All A x #i.
-  Secret_N(A,x) @i ==>
+  Secret(A,x) @i ==>
   not (Ex #j. K(x)@j)
   | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
 
@@ -90,31 +90,31 @@ lemma secrecy_PFS:
 
 lemma noninjectiveagreementINITIATOR:
   "All a b t #i.
-  Commit(a,b,<'I','R',t>) @i
-  ==> (Ex #j. Running(b,a,<'I','R',t>) @j)
+  Commit(a,b,<'A','B',t>) @i
+  ==> (Ex #j. Running(b,a,<'A','B',t>) @j)
   | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
 
 lemma noninjectiveagreementRESPONDER:
   "All a b t #i.
-  Commit(a,b,<'R','I',t>) @i
-  ==> (Ex #j. Running(b,a,<'R','I',t>) @j)
+  Commit(a,b,<'B','A',t>) @i
+  ==> (Ex #j. Running(b,a,<'B','A',t>) @j)
   | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
 
 lemma injectiveagreementINITIATOR:
   "All a b t #i.
-  Commit(a,b,<'I','R',t>) @i
-  ==> (Ex #j. Running(b,a,<'I','R',t>) @j
+  Commit(a,b,<'A','B',t>) @i
+  ==> (Ex #j. Running(b,a,<'A','B',t>) @j
   & j < i
-  & not (Ex a2 b2 #i2. Commit(a2,b2,<'I','R',t>) @i2
+  & not (Ex a2 b2 #i2. Commit(a2,b2,<'A','B',t>) @i2
   & not (#i2 = #i)))
   | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
 
 lemma injectiveagreementRESPONDER:
   "All a b t #i.
-  Commit(a,b,<'R','I',t>) @i
-  ==> (Ex #j. Running(b,a,<'R','I',t>) @j
+  Commit(a,b,<'B','A',t>) @i
+  ==> (Ex #j. Running(b,a,<'B','A',t>) @j
   & j < i
-  & not (Ex a2 b2 #i2. Commit(a2,b2,<'R','I',t>) @i2
+  & not (Ex a2 b2 #i2. Commit(a2,b2,<'B','A',t>) @i2
   & not (#i2 = #i)))
   | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
 

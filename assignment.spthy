@@ -44,7 +44,7 @@ rule dh_send_n:
         N = ('g'^~Y)^~ltkB
     in
     [St_B_2(B, ~id, ~ltkB, M), Fr(~Y), !Pk(A, pkA)] 
-    --[ Send_to_A(B, aenc(N, pkA)), Honest(A), Honest(B), Role('B') ]->
+    --[ Send_to_A(B, aenc(N, pkA)), Secret(A, N), Honest(A), Honest(B), Role('B') ]->
     [ St_B_3(B, ~id, ~ltkB, A, pkA, M, N, ~Y), Out(aenc(N, pkA)) ]
 
 rule dh_receive_n: 

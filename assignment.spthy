@@ -1,0 +1,119 @@
+theory assignment
+begin
+
+builtins: hashing, asymmetric-encryption, symmetric-encryption, diffie-hellman, bilinear-pairing
+
+//Register public key
+rule Register_pk:
+    [ Fr(~ltkA) ] 
+  -->
+    [ !Ltk($A, ~ltkA),
+      !Pk($A, pk(~ltkA)),
+      Out(pk(~ltkA))
+    ]
+rule Reveal_ltk:
+  [ !Ltk(A, ~ltkA) ] --[ Reveal(A) ]-> [ Out(~ltkA) ]
+
+rule dh_init_A:
+    [ !Ltk( A, ~ltkA) ]
+    --[ Create(A), Role('A') ]->
+    [ St_A_1(A, ~ltkA) ]
+
+rule dh_init_B:
+    [ !Ltk(B, ~ltkB) ]
+    --[ Create(B), Role('B') ]->
+    [ St_B_1(B, ~ltkB) ]
+
+rule dh_send_m:
+    let
+        M = ('g'^~X)^~ltkA
+    in
+    [St_A_1($A, ~ltkA), Fr(~X), !Pk(B, pkB)] 
+    --[ Send_to_B($A, aenc(M, pkB)), Secret(M), Honest($A), Honest(B), Role('A') ]->
+    [ St_A_2($A, ~ltkA, B, pkB, M, ~X ), Out(aenc(M, pkB)) ]
+
+rule dh_receive_m:
+    [ St_B_1(B, ltkB), In(aenc(M, ~pkB)) ]
+    --[Receive_M( B, aenc(M, ~pkB)), Role('B') ]->
+    [St_B_2(B, ltkB, M) ]
+
+rule dh_send_n:
+    let
+        N = ('g'^~Y) ^ ~ltkB
+    in
+    [St_B_2($B, ~ltkB, M), Fr(~Y), !Pk(A, pkA)] 
+    --[ Send_to_A($B, aenc(N, pkA)), Secret(N), Honest(A), Honest($B), Role('B') ]->
+    [ St_B_3($B, ~ltkB, A, pkA, M, N, ~Y), Out(aenc(N, pkA)) ]
+
+rule dh_receive_n: 
+    [ St_A_2($A, ~ltkA, $B, pkB, M, ~X), In(aenc(N, ~ltkA)) ]
+    --[Receive_N( $A, aenc(N, ~ltkA)), Role('A') ]->
+    [St_A_3($A, ~ltkA, $B, pkB, M, N, ~X) ]
+
+rule A_create_session:
+    let
+        Za = pmult((pkB^~X)^~ltkA, N^~ltkA)
+    in
+    [St_A_3($A, ~ltkA, B, pkB, M, N, ~X) ]
+    --[Create_Zb($Zb)]->
+    [St_A_4($A, ~ltkA, B, pkB, M, N, ~X, Za)]
+
+rule B_create_session:
+    let
+        Zb = pmult((pkA^~Y)^~ltkB, M^~ltkB)
+    in
+    [St_B_3($B, ~ltkB, A, pkA, M, N, ~Y) ]
+    --[Create_Zb(Zb)]->
+    [St_B_4($B, ~ltkB, A, pkA, M, N, ~Y, Zb)]
+
+
+lemma executable:
+     exists-trace
+     "Ex A B m #i #j.
+      Send_to_B(A,m) @i & 
+      Receive_M(B,m) @j"
+
+
+//lemma secrecy:
+//  "All A x #i.
+//  Secret(A,x) @i ==>
+//  not (Ex #j. K(x)@j)
+//  | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
+//
+//lemma secrecy_PFS:
+//  "All A x #i.
+//  Secret(A,x) @i ==>
+//  not (Ex #j. K(x)@j)
+//  | (Ex X #r. Reveal(X)@r & Honest(X) @i & r < i)"
+//
+//lemma noninjectiveagreementINITIATOR:
+//  "All a b t #i.
+//  Commit(a,b,<'I','R',t>) @i
+//  ==> (Ex #j. Running(b,a,<'I','R',t>) @j)
+//  | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
+//
+//lemma noninjectiveagreementRESPONDER:
+//  "All a b t #i.
+//  Commit(a,b,<'R','I',t>) @i
+//  ==> (Ex #j. Running(b,a,<'R','I',t>) @j)
+//  | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
+//
+//lemma injectiveagreementINITIATOR:
+//  "All a b t #i.
+//  Commit(a,b,<'I','R',t>) @i
+//  ==> (Ex #j. Running(b,a,<'I','R',t>) @j
+//  & j < i
+//  & not (Ex a2 b2 #i2. Commit(a2,b2,<'I','R',t>) @i2
+//  & not (#i2 = #i)))
+//  | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
+//
+//lemma injectiveagreementRESPONDER:
+//  "All a b t #i.
+//  Commit(a,b,<'R','I',t>) @i
+//  ==> (Ex #j. Running(b,a,<'R','I',t>) @j
+//  & j < i
+//  & not (Ex a2 b2 #i2. Commit(a2,b2,<'R','I',t>) @i2
+//  & not (#i2 = #i)))
+//  | (Ex X #r. Reveal(X)@r & Honest(X) @i)"
+
+end

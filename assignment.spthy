@@ -44,12 +44,12 @@ rule dh_send_n:
         N = ('g'^~Y)^~ltkB
     in
     [St_B_2(B, ~id, ~ltkB, M), Fr(~Y), !Pk(A, pkA)] 
-    --[ Send_to_A(B, aenc(N, pkA)), Secret(A, N), Honest(A), Honest(B), Role('B') ]->
+    --[ Send_to_A(B, aenc(N, pkA)), Secret(A, N), Honest(A), Honest(B), Role('B'), Running(A, B, <'resp', M, N>) ]->
     [ St_B_3(B, ~id, ~ltkB, A, pkA, M, N, ~Y), Out(aenc(N, pkA)) ]
 
 rule dh_receive_n: 
     [ St_A_2(A, ~id, ~ltkA, B, pkB, M, ~X), In(aenc(N, pkA)) ]
-    --[Receive_N( A, aenc(N, pkA)), Secret(A, N), Honest(A), Honest(B), Role('A') ]->
+    --[Receive_N( A, aenc(N, pkA)), Secret(A, N), Honest(A), Honest(B), Role('A'), Commit(A, B, <'resp', M, N>) ]->
     [St_A_3(A, ~id, ~ltkA, B, pkB, M, N, ~X) ]
 
 rule A_create_session:
